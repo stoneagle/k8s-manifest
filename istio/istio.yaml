@@ -1,0 +1,169 @@
+---
+# Pilot service for discovery
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio
+data:
+  mesh: |-
+    # Uncomment the following line to enable mutual TLS between proxies
+    # authPolicy: MUTUAL_TLS
+    mixerAddress: istio-mixer.default.svc.qihoo.cloud:9091
+    discoveryAddress: istio-pilot.default.svc.qihoo.cloud:8080
+    ingressService: istio-ingress.default.svc.qihoo.cloud
+    zipkinAddress: zipkin.default.svc.qihoo.cloud:9411
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-pilot
+  labels:
+    istio: pilot
+spec:
+  ports:
+  - port: 8080
+    name: http-discovery
+  - port: 8081
+    name: http-apiserver
+  selector:
+    istio: pilot
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: istio-pilot-service-account
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-pilot
+spec:
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        alpha.istio.io/sidecar: ignore
+      labels:
+        istio: pilot
+    spec:
+      serviceAccountName: istio-pilot-service-account
+      containers:
+      - name: discovery
+        image: r.qihoo.cloud/mirror/istio/pilot:0.1.6 
+        imagePullPolicy: Always
+        args: ["discovery", "-v", "2"]
+        ports:
+        - containerPort: 8080
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+      - name: apiserver
+        image: r.qihoo.cloud/mirror/istio/pilot:0.1.6
+        imagePullPolicy: Always
+        args: ["apiserver", "-v", "2"]
+        ports:
+        - containerPort: 8081
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+---
+################################
+# Istio ingress controller
+################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-ingress
+  labels:
+    istio: ingress
+spec:
+  # type: LoadBalancer
+  ports:
+  - port: 80
+#   nodePort: 32000
+    name: http
+  - port: 443
+    name: https
+  selector:
+    istio: ingress
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: istio-ingress-service-account
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-ingress
+spec:
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        alpha.istio.io/sidecar: ignore
+      labels:
+        istio: ingress
+    spec:
+      serviceAccountName: istio-ingress-service-account
+      containers:
+      - name: istio-ingress
+        # image: docker.io/istio/proxy_debug:0.1.6
+        image: r.qihoo.cloud/mirror/istio/proxy_debug:0.1.6
+        args: ["proxy", "ingress", "-v", "2"]
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+---
+
+################################
+# Istio egress envoy
+################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-egress
+spec:
+  ports:
+  - port: 80
+  selector:
+    istio: egress
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-egress
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        istio: egress
+    spec:
+      containers:
+      - name: proxy
+        # image: docker.io/istio/proxy_debug:0.1.6
+        image: r.qihoo.cloud/mirror/istio/proxy_debug:0.1.6 
+        imagePullPolicy: Always
+        args: ["proxy", "egress", "-v", "2"]
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+---
+
