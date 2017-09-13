@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: istio-egress
+spec:
+  ports:
+  - port: 80
+  selector:
+    istio: egress
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-egress
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        istio: egress
+    spec:
+      containers:
+      - name: proxy
+        image: r.qihoo.cloud/mirror/istio/proxy_debug:0.2.1
+        imagePullPolicy: Always
+        args: ["proxy", "ingress", "-v", "2", "--domain", "qihoo.cloud"]
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/istio/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: istio

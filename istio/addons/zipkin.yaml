@@ -2,7 +2,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: zipkin
+  name: istio-zipkin
 spec:
   replicas: 1
   template:
@@ -10,7 +10,7 @@ spec:
       annotations:
         alpha.istio.io/sidecar: ignore
       labels:
-        app: zipkin
+        app: istio-zipkin
     spec:
       containers:
       - name: zipkin
@@ -28,7 +28,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: zipkin
+  name: istio-zipkin
 spec:
   externalIPs:
   - 10.168.96.52
@@ -40,5 +40,4 @@ spec:
     port: 30303 
     targetPort: 9411 
   selector:
-    app: zipkin
----
+    app: istio-zipkin

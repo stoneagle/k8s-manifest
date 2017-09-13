@@ -1,0 +1,38 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: nginx 
+  name: nginx 
+  namespace: default 
+spec:
+  ports:
+  - name: nginx
+    port: 8888 
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: nginx 
+---
+apiVersion: extensions/v1beta1
+kind: Deployment 
+metadata:
+  name: nginx 
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx 
+    spec:
+      containers:
+      # - image: r.qihoo.cloud/library/nginx:1.11.5-curl 
+      - image: r.qihoo.cloud/infra/stress/nginx:fpm-nginx-proxy 
+        ports:
+        - containerPort: 8000
+        imagePullPolicy: IfNotPresent
+        name: nginx 
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: qihoo.cloud-secret

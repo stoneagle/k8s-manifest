@@ -17,9 +17,6 @@ rules:
 - apiGroups: [""]
   resources: ["configmaps", "endpoints", "pods", "services"]
   verbs: ["*"]
-- apiGroups: [""]
-  resources: ["namespaces"]
-  verbs: ["get", "list"]
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -50,7 +47,7 @@ rules:
   verbs: ["get", "watch", "list"]
 ---
 # Grant permissions to the Pilot/discovery.
-kind: ClusterRoleBinding
+kind: ClusterRoleBinding 
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: istio-pilot-admin-role-binding
@@ -64,7 +61,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 # Grant permissions to the Pilot/discovery.
-kind: ClusterRoleBinding
+kind: ClusterRoleBinding 
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: istio-ca-role-binding
@@ -78,7 +75,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 # Grant permissions to the Ingress controller.
-kind: ClusterRoleBinding
+kind: ClusterRoleBinding 
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: istio-ingress-admin-role-binding
@@ -94,7 +91,7 @@ roleRef:
 # Grant permissions to the sidecar.
 # TEMPORARY: the istioctl should generate a separate service account for the proxy, and permission
 # granted only to that account !
-kind: ClusterRoleBinding
+kind: ClusterRoleBinding 
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: istio-sidecar-role-binding

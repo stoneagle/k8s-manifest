@@ -1,0 +1,119 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: fpm-nginx-abtest-test 
+  name: fpm-nginx-abtest-test 
+  namespace: default 
+spec:
+  ports:
+  - name: fpm-nginx-abtest-test 
+    port: 18546 
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: fpm-nginx-abtest-test 
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    alpha.istio.io/sidecar: injected(deprecated)
+    status.sidecar.istio.io: injected-version-root@e576b27c22f9-0.2.1-d6a3290
+  creationTimestamp: null
+  name: fpm-nginx-abtest-test
+  namespace: default
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        alpha.istio.io/sidecar: injected(deprecated)
+        status.sidecar.istio.io: injected-version-root@e576b27c22f9-0.2.1-d6a3290
+      creationTimestamp: null
+      labels:
+        app: fpm-nginx-abtest-test
+    spec:
+      containers:
+      - image: r.qihoo.cloud/infra/stress/nginx:fpm-nginx-resource
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - containerPort: 80
+        resources: {}
+      - image: r.qihoo.cloud/infra/stress/fpm:fpm-nginx-resource-up
+        imagePullPolicy: IfNotPresent
+        name: fpm
+        resources: {}
+      - args:
+        - proxy
+        - sidecar
+        - -v
+        - "2"
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: INSTANCE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: r.qihoo.cloud/mirror/istio/proxy_debug:0.2.1
+        imagePullPolicy: IfNotPresent
+        name: istio-proxy
+        resources: {}
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsUser: 1337
+        volumeMounts:
+        - mountPath: /etc/istio/config
+          name: istio-config
+          readOnly: true
+        - mountPath: /etc/istio/proxy
+          name: istio-envoy
+      imagePullSecrets:
+      - name: qihoo.cloud-secret
+      initContainers:
+      - args:
+        - -p
+        - "15001"
+        - -u
+        - "1337"
+        image: r.qihoo.cloud/mirror/istio/proxy_init:0.2.1
+        imagePullPolicy: IfNotPresent
+        name: istio-init
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - CAP_NET_ADMIN
+          privileged: true
+      - args:
+        - -c
+        - sysctl -w kernel.core_pattern=/etc/istio/proxy/core.%e.%p.%t && ulimit -c
+          unlimited
+        command:
+        - /bin/sh
+        image: alpine
+        imagePullPolicy: IfNotPresent
+        name: enable-core-dump
+        resources: {}
+        securityContext:
+          privileged: true
+      restartPolicy: Always
+      volumes:
+      - configMap:
+          name: istio
+        name: istio-config
+      - emptyDir:
+          medium: Memory
+          sizeLimit: "0"
+        name: istio-envoy
+status: {}
+---

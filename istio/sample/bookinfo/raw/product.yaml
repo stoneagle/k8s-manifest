@@ -1,0 +1,32 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: product
+  name: product
+spec:
+  ports:
+  - port: 9080
+    name: http
+  selector:
+    app: product
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: product-v1
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: product
+        version: v1
+    spec:
+      containers:
+      - name: product
+        image: r.qihoo.cloud/mirror/istio/example/bookinfo-productpage:v1 
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9080

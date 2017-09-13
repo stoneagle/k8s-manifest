@@ -1,8 +1,7 @@
----
 apiVersion: v1
 kind: Service
 metadata:
-  name: grafana
+  name: istio-grafana
 spec:
   externalIPs:
   - 10.168.96.52
@@ -15,12 +14,12 @@ spec:
     protocol: TCP
     name: grafana
   selector:
-    app: grafana
+    app: istio-grafana
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: grafana
+  name: istio-grafana
 spec:
   replicas: 1
   template:
@@ -28,12 +27,11 @@ spec:
       annotations:
         alpha.istio.io/sidecar: ignore
       labels:
-        app: grafana
+        app: istio-grafana
     spec:
       containers:
       - name: grafana
-        # image: docker.io/istio/grafana:0.1.6
-        image: r.qihoo.cloud/mirror/istio/grafana:0.1.6
+        image: r.qihoo.cloud/mirror/istio/grafana:0.2.1
         imagePullPolicy: Always
         ports:
           - containerPort: 3000
@@ -54,4 +52,3 @@ spec:
       volumes:
       - name: grafana-data
         emptyDir: {}
----

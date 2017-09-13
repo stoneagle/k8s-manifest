@@ -1,0 +1,40 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: fpm-nginx-abtest-test 
+  name: fpm-nginx-abtest-test 
+  namespace: default 
+spec:
+  ports:
+  - name: fpm-nginx-abtest-test 
+    port: 18546 
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: fpm-nginx-abtest-test 
+---
+apiVersion: extensions/v1beta1
+kind: Deployment 
+metadata:
+  name: fpm-nginx-abtest-test 
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: fpm-nginx-abtest-test 
+    spec:
+      containers:
+      - image: r.qihoo.cloud/infra/stress/nginx:fpm-nginx-resource 
+        ports:
+        - containerPort: 80
+        imagePullPolicy: IfNotPresent
+        name: nginx 
+      - image: r.qihoo.cloud/infra/stress/fpm:fpm-nginx-resource-up 
+        imagePullPolicy: IfNotPresent
+        name: fpm 
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: qihoo.cloud-secret

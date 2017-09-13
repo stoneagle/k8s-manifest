@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio
+data:
+  mesh: |-
+    # Uncomment the following line to enable mutual TLS between proxies
+    # authPolicy: MUTUAL_TLS
+    mixerAddress: istio-mixer.default.svc.qihoo.cloud:9091
+    discoveryAddress: istio-pilot.default.svc.qihoo.cloud:8080
+    ingressService: istio-ingress.default.svc.qihoo.cloud
+    statsdUdpAddress: istio-mixer.default.svc.qihoo.cloud:9125
+    zipkinAddress: istio-zipkin.default.svc.qihoo.cloud:30303
